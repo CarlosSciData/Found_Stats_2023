@@ -1,0 +1,276 @@
+---
+title: 'DSCI 610 Found Comp Stats: Problem Set 3'
+author: "Carlos Gonzalez"
+date: "May 2, 2023"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is the third graded assignment for the course. It will be worth 100 points and is due by 12pm on Tuesday, May 9th. To complete this assignment, you will write code in this RMarkdown file, "knit" (render) the file to an `.html` output file, and upload both files to Canvas. Be sure to replace "Your Name" with your name as the author of this document.
+
+For Unix code, please copy and paste BOTH the code you ran and the output into the appropriate chunks provided with each problem. Please give plots and plot axes meaningful labels. Please make sure that all of your code is echoed, and that any output requested in the instructions is evaluated.
+
+## Part 1 Pipes and Scripts (35 pts)
+
+Download all of the "Drerio_development" csv files from Canvas. Make sure they are saved in a directory accessible to your command line application (terminal or Ubuntu). __Complete the following problems using Unix code, and please print the code and output for all problems into the chunks below.__
+
+1. Use a Unix code to display the path for your downloaded files. (1 pts)
+
+```{r engine = 'bash', eval = FALSE}
+#Command
+# starting from home directory
+cd PS_3
+ls -1
+
+
+```
+
+```{r}
+Output home/carlosg117/PS_3
+Drerio_development1.csv
+Drerio_development2.csv
+Drerio_development3.csv
+```
+
+```
+
+2. Using piped commands, move data from all three files into one combined file, titled "Drerio_development_complete.csv". You'll  work with this file for the following steps. (4 pts)
+
+```{r engine = 'bash', eval = FALSE}
+Once in directory containing the three csv files
+cat Drerio_development1.csv Drerio_development2.csv Drerio_development3.csv > Drerio_development_complete.csv
+```
+```{r}
+Output
+carlosg117@JARVIS-11799:~/PS_3$ ls -1
+Drerio_development1.csv
+Drerio_development2.csv
+Drerio_development3.csv
+Drerio_development_complete.csv
+```
+
+3. Create a new column named "Sample_ID" that combines the Sample and Group columns into one column. Print out the first 5 rows of the dataset to check that your code worked. (5 pts)
+
+```{r engine = 'bash', eval = FALSE}
+#your way you showed us in class
+$ awk -F, '{print ","$2,$7}' Drerio_development_complete.csv > Sample_ID.csv
+
+$ sed 's/\"//g' Sample_ID.csv > SampleID.csv
+
+$ paste Drerio_development_complete.csv SampleID.csv > Drerio_development_complete_new.csv
+
+$ head -n 5 Drerio_development_complete_new.csv
+#Output:
+"","Sample","Condition","Sex","Age_Days","Pigmentation","Group","Weight_mg","Length_cm" ,Sample Group
+"1",1,"Control","Female",1,33,"A",8.23184310557877,0.921109337043722    ,1 A
+"2",2,"Control","Male",2,77,"A",9.693759090345,1.83379862589991 ,2 A
+"3",3,"Control","Female",3,15,"A",9.29444477846037,4.14459883895719     ,3 A
+"4",4,"Control","Male",4,39,"A",10.093248494996,4.98573008030553        ,4 A
+
+
+```
+
+4. Create a new file, called "Drerio_development_analysis.txt" where you'll store summary data for your samples. Calculate the mean weight, length, and pigmentation score for each group in the dataset (Sex, Age, Condition). Store these 36 values in the "Drerio_development_analysis.txt" file. (10 pts)
+
+```{r engine = 'bash', eval = FALSE}
+#### I think my column numbers might be different because I created a new file called Drerio_development_complete_new.csv
+# Paste your analysis code here:
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $9} END {print "Control:Length " sum/NR}' >> Drerio_development_analysis.txt
+
+# For each group, modify using the following code:
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $9} END {print "Treatment:Length " sum/NR}' >> Drerio_development_analysis.txt
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $8} END {print "Control:Weight " sum/NR}' >> Drerio_development_analysis.txt
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $8} END {print "Treatment:Weight " sum/NR}' >> Drerio_development_analysis.txt
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $6} END {print "Control:Pigmentation " sum/NR}' >> Drerio_development_analysis.txt
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $6} END {print "Treatment:Pigmentation " sum/NR}' >> Drerio_development_analysis2.txt
+
+```
+
+5. Print out the contents of that analysis file and paste them in the chunk below. (2 pts)
+
+```{r engine = 'bash', eval = FALSE}
+#Output:
+Control:Length 2.9542
+Treatment:Length 3.0351
+Control:Weight 9.56008
+Treatment:Weight 9.48512
+Control:Pigmentation 48.09
+Treatment:Pigmentation 51.9333
+
+
+```
+
+6. Using the code you wrote in Problem 4 above, create a script that will combine all of those steps into one easy command. The outcome should be the same: calculating the means of various measures for the different group in your combined file, and storing those values in a new .txt file. Paste all the code in your script in the chunk below. (10 pts)
+
+```{r engine = 'bash', eval = FALSE}
+grep "Control|Treatment" Drerio_development_complete_new.csv | awk -F, '{
+  if ($3 == "Control") {
+    sum_length += $9
+    sum_weight += $8
+    sum_pigmentation += $6
+    count++
+  } else {
+    sum_length += $9
+    sum_weight += $8
+    sum_pigmentation += $6
+    count++
+  }
+} END {
+  print "Control:Length " sum_length / count
+  print "Control:Weight " sum_weight / count
+  print "Control:Pigmentation " sum_pigmentation / count
+  print "Treatment:Length " sum_length / count
+  print "Treatment:Weight " sum_weight / count
+  print "Treatment:Pigmentation " sum_pigmentation / count
+}' >> Drerio_development_analysis2.txt 
+```
+
+```{r}
+grep "Control|Treatment" Drerio_development_complete_new.csv | awk -F, '{
+  if ($1 == "Control") {
+    sum_length += $9
+    sum_weight += $8
+    sum_pigmentation += $6
+    count++
+  } else {
+    sum_length += $9
+    sum_weight += $8
+    sum_pigmentation += $6
+    count++
+  }
+} END {
+  for (i = 1; i <= 3; i++) {
+    if (count == 0) {
+      print "No data for this group"
+    } else {
+      print "Group " i ": " $i " " sum_length / count
+    }
+  }
+}' >> Drerio_development_analysis2.txt
+```
+
+```
+###Tried running these but either said fatal division by zero error or no data for this group
+
+
+7. Run the script, and paste the code you used to run the script below. Include the code required to change permissions for the script. (3 pts)
+
+```
+```{r}
+#!/bin/bash
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $9} END {print "Control:Length " sum/NR}' >> Dreri>
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $9} END {print "Treatment:Length " sum/NR}' >> D>
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $8} END {print "Control:Weight " sum/NR}' >> Dreri>
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $8} END {print "Treatment:Weight " sum/NR}' >> D>
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $6} END {print "Control:Pigmentation " sum/NR}' >>>
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $6} END {print "Treatment:Pigmentation " sum/NR}>
+```
+```
+```{r}
+## Part 2 Talapas (20 pts)
+Upload the "Drerio_development_complete.csv" file you made in Part 1 to your Talapas account.
+
+1. Convert your script from Part 1 that you ran on your personal computer into a bash script that can be submitted as a job on Talapas. Paste the content of that script in the chunk below. (10 pts)
+
+
+#!/bin/bash
+#SBATCH --account=datascience
+#SBATCH --job-name=TestJob1
+#SBATCH --output=TestJob1
+#SBTACH --error=TestJob1
+#SBATCH --time=0-01:00:00
+#SBATCH --partition=short
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $9} END {print "Control:Length " sum/NR}' >> Dreri>
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $9} END {print "Treatment:Length " sum/NR}' >> D>
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $8} END {print "Control:Weight " sum/NR}' >> Dreri>
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $8} END {print "Treatment:Weight " sum/NR}' >> D>
+
+grep "Control" Drerio_development_complete_new.csv | awk -F, '{sum += $6} END {print "Control:Pigmentation " sum/NR}' >>>
+
+grep "Treatment" Drerio_development_complete_new.csv | awk -F, '{sum += $6} END {print "Treatment:Pigmentation " sum/NR}>
+
+```
+
+
+2. Describe what the output file (.out) generated from your Talapas job looks like. Is there any text or information in it? Paste the contents of the file in the chunk below, and then describe why your output file looks the way that it does. (5 pts)
+
+```{r}
+I think since I did not change the name from TestJob1 it must have overwritten the example job we did in class or something because I saw a new job that ran and it outputed the Drerio analysis file but the TestJob1 is now empty?
+```
+
+
+```
+
+3. Describe what the error file (.err) generated from your Talapas job looks like. Is there any text or information in it? Paste the contents of the file in the chunk below, and then describe why your error file looks the way that it does. (5 pts)
+
+```{r engine = 'bash', eval = FALSE}
+I think for the afforemnetioned reason above it was unable to display an error file. Though it was still able to run the job and output the analysis text files. I want to show you during your office hours or on Tuesday so we can figure this out. 
+```
+
+
+## Part 3 GitHub (20 pts)
+For the following problems, please access GitHub from the desktop application. The desktop application can be downloaded here: https://desktop.github.com/ 
+
+1. Create a GitHub account (if you don't already have one) at github.com. Type your username here so that I can look up your account: CarlosSciData (3 pts)
+
+2. Go through the short tutorial available throught the GitHub desktop app. (You may need to download a text editor app, such as VSCode.) In your own words, define the  following terms: (1 pt each)
+  - repository: A central location where coding projects can be stored and shared with others. 
+  - branch: A branch is what allow programmers to work on a separate version of the coding project without interfering with the main code (main branch)
+  - commit: Is when you note what the current state of your coding project is. This allows you to to keep track of project over time and versioning the project. 
+  - push: Uploading your code/alterations from your own repository to a different repository.
+  - pull: Downloading code/changes from a different repository to your own repository. 
+
+3. Start a new repository for this class, titled Found_Stats_2023. (2 pts)
+
+4. Once you've finished Parts 1-3 of this assignment, upload your homework to your GitHub Found_Stats_2023 repository. Then, use the GitHub desktop app and your text editor to complete the reflection portion of this assignment as new commits to the GitHub document. (Note: You will still upload the final, completed and knit version of your homework on Canvas.) 
+
+Take a screenshot of your commit history (either the history tab in the GitHub desktop app or the Pull Requests tab on your GitHub via the browser) and insert as a picture in the chunk below. You will replace the [/path/to/IMAGE.jpeg] text with the correct path for your image. Be sure to include the correct extension. Please check if your image displays correctly when knit - you may need to change the "out.width = '80%'" variable in the chunk header. (10 pts)
+
+## Part 4 Reflection (25 pts)
+Answer the following questions in a couple of sentences each. No right or wrong answers! (5 pts each)
+
+1. Since we have reached the end of the first half of the term, reflect on your coding skills. How does where you are now compare to how you felt at the beginning of this term?
+
+I think have definitely have more practice with R which makes me more comfortable using it in new ways.Unix/Linux looked more intimidating in the beginning then it actually was and I believe I have a solid foundation in it now.
+
+2. What aspects of the class structure have been helpful and that you'd like to see continued?
+
+I like how we have the ability to practice code during class and that it's not all just lecture. I also like how the homework is directly related to what we learned in class that week. 
+
+3. Are there aspects of the class structure that could be improved to help your learning?
+
+Perhaps talking more about the logic of how these functions work. What I mean is spending more time defining things like what a string is or what an index is can help us when during our homework and in class practice. Especially in the beginning, spending more time getting us immersed in what the vocabulary of coding is. I wish the class what a bit longer honestly (like an extra 20 minutes) so that we can discuss the more conceptual while maintaining the in class practice. 
+
+4. Take a look at the syllabus schedule for the second half of the term. Are there any topics in particular that seem more exciting or useful for you?
+
+I feel most excited about the statistics portion of the class because I want to know how use R for this purpose. I think this will be the majority of what I'll use R for in my research. 
+
+
+5. Are there any other basic coding skills that you wish we would have covered in this class, that we could try to incorporate in this class for next year?
+
+Perhaps learning about how to translate the skills from one language into another. I feel like many coding languages have different vocabulary for the same thing. So for example, comparing R with Python might be a good way to apply our knowledge of R to another programming language.
+
+
+
